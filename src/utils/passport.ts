@@ -5,7 +5,7 @@ import User from "../entity/user"
 import { __google_client_id__, __google_client_secret__ } from "./contants"
 
 passport.serializeUser((user, done) => {
-  done(null, user.id)
+  done(null, (user as User).id)
 })
 
 passport.deserializeUser<number>((id, done) => {
@@ -19,11 +19,12 @@ passport.use(
     {
       clientID: __google_client_id__,
       clientSecret: __google_client_secret__,
-      callbackURL: "http://localhost:3000",
+      callbackURL: "/auth/google/redirect",
     },
     (accessToken, refreshToken, profile, done) => {
       const repo = getRepository(User)
       // check if user exists
+      // console.log(profile)
       repo
         .findOne({ googleId: profile.id })
         .then((user) => {
@@ -32,7 +33,7 @@ passport.use(
           } else {
             const newUser = repo.create({
               googleId: profile.id,
-              username: profile.username,
+              username: profile.displayName,
               email:
                 profile.emails && profile.emails.length
                   ? profile.emails[0].value
@@ -49,7 +50,7 @@ passport.use(
               .catch()
           }
         })
-        .catch()
+        .catch((e) => console.log(e))
     }
   )
 )
